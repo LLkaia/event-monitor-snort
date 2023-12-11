@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 
 from script_rules import update_pulled_pork
 from .models import Event, Request, Rule
-from .serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer, RequestSerializer, RuleSerializer
+from .serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer, RequestSerializer,RuleSerializer
 
 
 class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
