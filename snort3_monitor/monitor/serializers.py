@@ -1,19 +1,15 @@
 from rest_framework import serializers
-
 from .models import Event, Rule, Request
-
 
 class RuleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rule
         fields = ('sid', 'rev', 'gid', 'action', 'message')
 
-
 class RequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
         fields = '__all__'
-
 
 class EventSerializer(serializers.ModelSerializer):
     sid = serializers.SerializerMethodField()
@@ -37,11 +33,9 @@ class EventSerializer(serializers.ModelSerializer):
     def get_message(obj):
         return obj.rule.message
 
-
 class EventCountAddressSerializer(serializers.Serializer):
     addr_pair = serializers.CharField(max_length=128)
     count = serializers.IntegerField()
-
 
 class EventCountRuleSerializer(serializers.Serializer):
     sid = serializers.CharField(max_length=128)

@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
-
-from django.db.models import Count, Value
+from django.db.models import Count, Value, F
 from django.db.models.functions import Concat
 from django.http import HttpResponseNotFound
-from django.db.models import F
 from django.db.models.query import QuerySet
 from django.utils.timezone import make_aware, utc
 from rest_framework import generics, status
@@ -13,7 +11,10 @@ from rest_framework.views import APIView
 
 from script_rules import update_pulled_pork
 from .models import Event, Request, Rule
-from .serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer, RequestSerializer, RuleSerializer
+from .serializers import (
+    EventSerializer, EventCountAddressSerializer,
+    EventCountRuleSerializer, RequestSerializer, RuleSerializer
+)
 
 
 class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
@@ -61,7 +62,9 @@ class RequestList(generics.ListAPIView):
         period_start = self.request.query_params.get('period_start')
         period_stop = self.request.query_params.get('period_stop')
         if not (period_start and period_stop):
-            raise ValidationError({"error": "You should define 'period_start' and 'period_stop' in format DD-MM-YY"})
+            raise ValidationError({
+                "error": "You should define 'period_start' and 'period_stop' in format DD-MM-YY"
+            })
 
         # checks if params are proper"YYYY-MM-DD HH:MM:SS"
         try:
@@ -105,7 +108,9 @@ class EventCountList(generics.ListAPIView):
 
         # checking if type params are included
         if not type_of_filter:
-            raise ValidationError({"error": "You should define 'type' of filter (sid or addr)"})
+            raise ValidationError({
+                "error": "You should define 'type' of filter (sid or addr)"
+            })
 
         # checking if period is known
         if period:
@@ -114,7 +119,9 @@ class EventCountList(generics.ListAPIView):
                 queryset = queryset.filter(timestamp__gte=period_start)
             else:
                 if period != 'all':
-                    raise ValidationError({"error": "Unknown 'period', use 'all', 'day', 'week' or 'month'"})
+                    raise ValidationError({
+                        "error": "Unknown 'period', use 'all', 'day', 'week' or 'month'"
+                    })
 
         # aggregation
         if type_of_filter == 'addr':
@@ -138,17 +145,15 @@ class RuleCreate(APIView):
         return Response({'message': f'{count} rules has been added'}, status=status.HTTP_201_CREATED)
     
 
-
 def error404(request, exception):
     """
     default 404 response
     need DEBUG=False
     """
-    return HttpResponseNotFound('{"error": "The request is malformed or invalid."}')
+    return HttpResponseNotFound(
+        '{"error": "The request is malformed or invalid."}')
 
-
-
-    
+ 
 class RuleListView(generics.ListAPIView):
     queryset = Rule.objects.all()
     serializer_class = RuleSerializer
@@ -176,6 +181,5 @@ class RuleListView(generics.ListAPIView):
             return Response(serializer.data)
 
         except Exception:
-            return Response(
-                {"error": "Bad Request", "message": "The request is malformed or invalid."},
+            return Response({"error": "Bad Request", "message": "The request is malformed or invalid."},
                 status=400)
