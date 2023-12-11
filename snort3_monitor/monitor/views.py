@@ -149,7 +149,7 @@ def error404(request, exception):
 
 
     
-class RulesListView(generics.ListAPIView):
+class RuleListView(generics.ListAPIView):
     queryset = Rule.objects.all()
     serializer_class = RuleSerializer
 
@@ -178,7 +178,7 @@ class RulesListView(generics.ListAPIView):
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
     
-        except Exception as e:
+        except Exception:
             return Response(
             {"error": "Bad Request", "message": "The request is malformed or invalid."},
             status=400)
