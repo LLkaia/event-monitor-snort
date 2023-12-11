@@ -46,3 +46,10 @@ class EventCountAddressSerializer(serializers.Serializer):
 class EventCountRuleSerializer(serializers.Serializer):
     sid = serializers.CharField(max_length=128)
     count = serializers.IntegerField()
+
+
+
+        
+
+
+        
