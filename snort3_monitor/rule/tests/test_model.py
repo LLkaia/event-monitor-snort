@@ -27,14 +27,14 @@ class RuleModelGeneralTests(TestCase):
     def setUpTestData(cls):
         rule1 = {
             "gid": 1,
-            "sid": 53159,
+            "sid": 9,
             "rev": 1,
             "action": "alert",
             "message": "MALWARE-OTHER Win.Trojan.ObliqueRAT download attempt"
         }
         rule2 = {
             "gid": 1,
-            "sid": 53158,
+            "sid": 8,
             "rev": 1,
             "action": "alert",
             "message": "MALWARE-OTHER Win.Trojan.ObliqueRAT download attempt"
@@ -44,17 +44,17 @@ class RuleModelGeneralTests(TestCase):
         cls.event = Event.objects.create(rule=cls.rule_with_event, timestamp=datetime.now())
 
     def test_rule_exists(self):
-        instance = Rule.get_rule(gid=1, sid=53159, rev=1)
+        instance = Rule.get_rule(gid=1, sid=9, rev=1)
         self.assertEqual(self.rule, instance)
 
     def test_rule_does_not_exist(self):
         with self.assertRaises(Http404):
-            Rule.get_rule(gid=2, sid=53159, rev=1)
+            Rule.get_rule(gid=2, sid=9, rev=1)
 
     def test_delete_rule(self):
         self.rule.delete()
         with self.assertRaises(Http404):
-            Rule.get_rule(gid=1, sid=53159, rev=1)
+            Rule.get_rule(gid=1, sid=9, rev=1)
 
     def test_unsuccessful_delete_rule(self):
         with self.assertRaises(ProtectedError):

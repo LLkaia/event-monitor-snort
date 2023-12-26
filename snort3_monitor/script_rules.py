@@ -3,7 +3,7 @@ import logging
 import os
 
 import django
-from django.http import Http404
+from django.db.models.deletion import ProtectedError
 
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
@@ -47,11 +47,27 @@ def update_pulled_pork(file: str) -> int:
     for line in data:
         rule = json.loads(line)
         try:
-            try:
-                # checking if rule exists
-                Rule.get_rule(rule['sid'], rule['rev'], rule['gid'])
-            except Http404:
-                # creating new rule if it is not exists
+            # checking if rule exists
+            deprecated_rules = Rule.objects.filter(sid=rule['sid'], gid=rule['gid'])
+
+            # If old rules exists, check if it deletable, else mark as deprecated and add new one
+            if deprecated_rules:
+                for old_rule in deprecated_rules:
+                    if old_rule.rev < rule['rev']:
+                        try:
+                            old_rule.delete()
+                        except ProtectedError:
+                            old_rule.deprecated = True
+                            old_rule.save()
+                            logger.info(f'Rule with sid {old_rule.sid} and {old_rule.rev} marked as deprecated.')
+                        finally:
+                            Rule(sid=rule['sid'], rev=rule['rev'], gid=rule['gid'],
+                                 action=rule['action'], message=rule['msg'], data_json=rule).save()
+                            count += 1
+                    else:
+                        continue
+            else:
+                # creating new rule if it does not exist
                 Rule(sid=rule['sid'], rev=rule['rev'], gid=rule['gid'],
                      action=rule['action'], message=rule['msg'], data_json=rule).save()
                 count += 1

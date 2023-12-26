@@ -1,6 +1,5 @@
 import logging
 import time
-from unittest import skip
 from unittest.mock import patch, mock_open
 
 from django.urls import reverse
@@ -40,22 +39,20 @@ class RuleAPITests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(len(response.data['results']), 0)
 
-    # @skip('Test may influence results of other tests')
     @patch('script_rules.os.system', side_effect=(0, 0, 0))
     def test_post_updating_valid_rules(self, patched_system):
         url = reverse('rules-create')
         with self.assertLogs(self.logger, level='INFO') as log:
             with patch('script_rules.open', mock_open(read_data=self.valid_rules)):
                 self.client.post(url)
-            time.sleep(0.1)
+            time.sleep(0.3)
             self.assertIn('2 new rules have been added.', log.output[0])
 
-    # @skip('Test may influence results of other tests')
     @patch('script_rules.os.system', side_effect=(0, 0, 0))
     def test_post_updating_invalid_rules(self, patched_system):
         url = reverse('rules-create')
         with self.assertLogs(self.logger, level='ERROR') as log:
             with patch('script_rules.open', mock_open(read_data=self.invalid_rules)):
                 self.client.post(url)
-            time.sleep(0.1)
+            time.sleep(0.3)
             self.assertIn("Rule's data is not full:", log.output[0])
