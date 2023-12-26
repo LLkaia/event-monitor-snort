@@ -17,18 +17,17 @@ logger = logging.getLogger('monitor')
 def update_pulled_pork(file: str) -> int:
     """Update Snort3 rules
 
-    Update rules from using PulledPork3 and dump them into a file,
-    get data from file in current directory and add them to a
-    database if these rules are not exist. Reload Snort3 when
-    update ends.
+    Update rules with PulledPork3 and dump them into a file, get
+    data from file and process it. Reload Snort3 when update ends.
 
     :param file: Name of file with rules
     :return: Count of new rules
     """
-    # updating rules
+    # update rules
     exit_code = os.system("/usr/local/bin/pulledpork3/pulledpork.py -c /usr/local/etc/pulledpork3/pulledpork.conf")
     if exit_code != 0:
         raise RuntimeError('Update PulledPork was not executed.')
+
     # dump rules
     exit_code = os.system(
         f"snort -c /usr/local/etc/snort/snort.lua "
@@ -38,19 +37,27 @@ def update_pulled_pork(file: str) -> int:
 
     with open(file, encoding='latin-1') as f:
         data = f.readlines()
-
     if not data:
         raise RuntimeError('File is empty!')
+    count = process_data(data)
 
-    # post rules
+    os.system("supervisorctl restart snort")
+
+    return count
+
+
+def process_data(data: list) -> int:
+    """Processing of rules"""
     count = 0
+
     for line in data:
         rule = json.loads(line)
         try:
             # checking if rule exists
             deprecated_rules = Rule.objects.filter(sid=rule['sid'], gid=rule['gid'])
 
-            # If old rules exists, check if it deletable, else mark as deprecated and add new one
+            # If old rules exists, try to delete them, else mark as deprecated and finally add new one
+            # If there are rules with same rev, skip them
             if deprecated_rules:
                 for old_rule in deprecated_rules:
                     if old_rule.rev < rule['rev']:
@@ -73,9 +80,6 @@ def update_pulled_pork(file: str) -> int:
                 count += 1
         except KeyError:
             logger.error(f"Rule's data is not full: {rule}")
-
-    os.system("supervisorctl restart snort")
-
     return count
 
 

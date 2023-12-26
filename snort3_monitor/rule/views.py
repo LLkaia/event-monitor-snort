@@ -1,6 +1,7 @@
 import logging
 import threading
 
+from django.db import connections
 from django.db.models import QuerySet
 from rest_framework import status, generics
 from rest_framework.exceptions import ValidationError
@@ -19,11 +20,15 @@ class RuleCreate(APIView):
     @staticmethod
     def background_update():
         """Perform background updating of rules"""
+        db_connection = connections['default']
         try:
             count = update_pulled_pork('rules.txt')
             logger.info(f"{count} new rules have been added.")
+            connections.close_all()
         except RuntimeError as e:
             logger.error(e)
+        finally:
+            db_connection.close()
 
     def post(self, request, *args, **kwargs) -> Response:
         """Start rules updating and send immediate response"""
