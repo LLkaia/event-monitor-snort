@@ -7,6 +7,7 @@ from django.urls import reverse
 from collections import OrderedDict
 from datetime import timedelta
 
+
 class EventAPIListViewTest(APITestCase):
     @classmethod
     def setUpTestData(cls):
