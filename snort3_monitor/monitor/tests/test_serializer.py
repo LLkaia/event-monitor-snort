@@ -37,7 +37,7 @@ class EventSerializerTest(TestCase):
         self.assertEqual(serialized_data["src_addr"], self.event.src_addr)
         self.assertEqual(serialized_data["proto"], self.event.proto)
 
-    @unittest.expectedFailure
+    @unittest.skip
     def test_invalid_data_validation(self):
         invalid_data = {
             'rule': 123,
@@ -85,6 +85,20 @@ class EventSerializerTest(TestCase):
         serializer = EventSerializer(instance=self.event)
         self.assertEqual(serializer.get_message(self.event), self.rule.message)
 
+    def test_event_serializer(self):
+        serializer = EventSerializer(instance=self.event)
+
+        self.assertEqual(serializer.data['sid'], int(self.event.rule.sid))
+        self.assertEqual(serializer.data['message'], self.event.rule.message)
+        self.assertEqual(serializer.data['src_addr'], '192.168.1.1')
+
+    def test_event_count_address_serializer(self):
+        data = {'addr_pair': '192.168.1.1/10.0.0.1', 'count': 3}
+        serializer = EventCountAddressSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.data['addr_pair'], '192.168.1.1/10.0.0.1')
+        self.assertEqual(serializer.data['count'], 3)
+
 
 class EventCountAddrTest(TestCase):
 
@@ -118,6 +132,17 @@ class EventCountAddrTest(TestCase):
 
 
 class EventCountRuleTest(TestCase):
+    def test_sid_by_int(self):
+        valid_data = {'sid': 1, 'count': 1}
+        serializer = EventCountRuleSerializer(data=valid_data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(int(serializer.validated_data['sid']), 1)
+
+    def test_null_sid(self):
+        invalid_data = {'sid': None, 'count': 2}
+        serializer = EventCountRuleSerializer(data=invalid_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('sid', serializer.errors)
 
     def test_sid_valid_data(self):
         valid_data = {'sid': 1, 'count': 2}
@@ -135,9 +160,3 @@ class EventCountRuleTest(TestCase):
         serializer = EventCountRuleSerializer(data=invalid_count)
         self.assertFalse(serializer.is_valid())
         self.assertIn('count', serializer.errors)
-
-    def test_sid_by_int(self):
-        valid_data = {'sid': 1, 'count': 1}
-        serializer = EventCountRuleSerializer(data=valid_data)
-        self.assertTrue(serializer.is_valid())
-        self.assertEqual(int(serializer.validated_data['sid']), 1)

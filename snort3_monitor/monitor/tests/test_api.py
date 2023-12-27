@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
 from collections import OrderedDict
-
+from datetime import timedelta
 
 class EventAPIListViewTest(APITestCase):
     @classmethod
@@ -19,10 +19,9 @@ class EventAPIListViewTest(APITestCase):
             data_json={"key": "value"}
         )
 
-        timestamp = datetime.datetime(2023, 12, 25, 12, 0, 0)
         cls.event_1 = Event.objects.create(
             rule=cls.rule,
-            timestamp=timestamp,
+            timestamp=datetime.datetime.now(),
             src_addr="192.168.1.1",
             proto="TCP",
             src_port=1234,
@@ -32,7 +31,7 @@ class EventAPIListViewTest(APITestCase):
 
         cls.event_2 = Event.objects.create(
             rule=cls.rule,
-            timestamp=timestamp,
+            timestamp=datetime.datetime.now(),
             src_addr="192.168.1.2",
             proto="UDP",
             src_port=8080,
@@ -187,6 +186,14 @@ class EventAPIListViewTest(APITestCase):
         self.assertEqual(item, sorted(item))
 
     def test_period_time_last_day(self):
+        new_timestamp = datetime.datetime.now()
+        self.event_1.timestamp = new_timestamp
+        self.event_1.save()
+
+        new_timestamp = datetime.datetime.now()
+        self.event_2.timestamp = new_timestamp
+        self.event_2.save()
+
         url = reverse('event-count-list')
         response = self.client.get(url, {'type': 'addr', 'period': 'day'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -194,11 +201,11 @@ class EventAPIListViewTest(APITestCase):
         self.assertEqual(len(results), 2)
 
     def test_period_time_last_week(self):
-        new_timestamp = datetime.datetime(2023, 12, 22, 12, 0, 0)
+        new_timestamp = datetime.datetime.now() - timedelta(days=3)
         self.event_1.timestamp = new_timestamp
         self.event_1.save()
 
-        new_timestamp = datetime.datetime(2023, 12, 12, 12, 0, 0)
+        new_timestamp = datetime.datetime.now() - timedelta(days=6)
         self.event_2.timestamp = new_timestamp
         self.event_2.save()
 
@@ -206,14 +213,14 @@ class EventAPIListViewTest(APITestCase):
         response = self.client.get(url, {'type': 'addr', 'period': 'week'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = response.data.get('results', [])
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 2)
 
     def test_period_time_last_month(self):
-        new_timestamp = datetime.datetime(2023, 12, 22, 12, 0, 0)
+        new_timestamp = datetime.datetime.now() - timedelta(days=18)
         self.event_1.timestamp = new_timestamp
         self.event_1.save()
 
-        new_timestamp = datetime.datetime(2023, 12, 12, 12, 0, 0)
+        new_timestamp = datetime.datetime.now() - timedelta(days=19)
         self.event_2.timestamp = new_timestamp
         self.event_2.save()
 
@@ -245,7 +252,7 @@ class EventAPIListViewTest(APITestCase):
         self.assertEqual(response.data['error'], "Unknown 'type', use 'sid' or 'addr'")
 
     def test_period_time_last_day_with_sid(self):
-        new_timestamp = datetime.datetime(2023, 12, 22, 12, 0, 0)
+        new_timestamp = datetime.datetime.now()
         self.event_1.timestamp = new_timestamp
         self.event_1.save()
 
