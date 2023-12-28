@@ -19,6 +19,12 @@ suppress =
 alert_json = 
 {
     file = true,
-    limit = 1024,
+    limit = 0,
     fields = 'seconds action dst_addr dst_port msg proto sid rev gid src_addr src_port',
+}
+
+perf_monitor =
+{
+    modules = {},
+    format = 'json'
 }
