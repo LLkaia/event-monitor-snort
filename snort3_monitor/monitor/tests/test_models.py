@@ -1,9 +1,9 @@
 from django.test import TestCase
-import unittest
 from monitor.models import Event
 from rule.models import Rule
 import datetime
 from django.core.exceptions import ValidationError
+from django.db.utils import DataError
 
 
 class EventModelTest(TestCase):
@@ -37,20 +37,14 @@ class EventModelTest(TestCase):
         max_lengh = self.event._meta.get_field('src_addr').max_length
         self.assertEqual(max_lengh, 128)
 
-    @unittest.expectedFailure
-    def test_max_length_src_addr(self):
-        max_length = Event._meta.get_field('src_addr').max_length
-        self.assertEqual(max_length, 125)
-
     def test_dst_port_null_blank(self):
         self.event.dst_port = None
         self.event.save()
         self.assertIsNone(self.event.dst_port)
 
-    @unittest.expectedFailure
     def test_src_addr_max_length(self):
         long_address = "x" * 129
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(DataError):
             Event.objects.create(rule=self.rule,
                                  timestamp=datetime.datetime.now(),
                                  src_addr=long_address)
