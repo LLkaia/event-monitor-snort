@@ -26,5 +26,6 @@ alert_json =
 perf_monitor =
 {
     modules = {},
-    format = 'json'
+    format = 'json',
+    packets = 0
 }

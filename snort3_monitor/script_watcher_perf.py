@@ -3,6 +3,7 @@ import logging
 import os
 import threading
 import time
+from datetime import datetime
 from json import JSONDecodeError
 
 import django
@@ -10,24 +11,29 @@ import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
 django.setup()
+from performance_log.models import Performance
 
 
 logger = logging.getLogger('monitor')
 
 
 class OnMyWatch:
-    # watch_directory: str = '/var/log/snort/'
+    watch_directory: str = '/var/log/snort/'
     log_file_pattern: str = 'perf_monitor_base.json'
-    # current_position_file: str = '/var/log/snort/current_alerts.txt'
-    watch_directory: str = 'C:\\Users\\Kaya\\Desktop\\TaskLPS\\event-monitor-snort\\'
-    current_position_file: str = 'C:\\Users\\Kaya\\Desktop\\TaskLPS\\event-monitor-snort\\current_alerts.txt'
+    current_position_file: str = '/var/log/snort/current_perf.txt'
+    # watch_directory: str = 'C:\\Users\\Kaya\\Desktop\\TaskLPS\\event-monitor-snort\\'
+    # current_position_file: str = 'C:\\Users\\Kaya\\Desktop\\TaskLPS\\event-monitor-snort\\current_alerts.txt'
 
     def __init__(self):
         self.lock = threading.Lock()
         self.watch_file = None
 
     def run(self):
-        """Start watch in log file"""
+        """Start watch into a log file
+
+        For current watch file check for updates every 60 seconds,
+        also check for new file creation every 5 min.
+        """
         logger.info('Running.')
         try:
             i = 0
@@ -49,17 +55,18 @@ class OnMyWatch:
             logger.info('Stopped.')
 
     def read_data(self):
-        """Open file and read data"""
+        """Open file, read and prepare data"""
         try:
             with self.lock:
                 with open(self.watch_file, encoding='latin-1') as file:
                     file.seek(self.get_current_position())
                     new_data = file.read()
                     self.save_current_position(file.tell())
-
+                new_data = new_data.strip('[],\n ')
                 if new_data:
-                    self.save_data(new_data)
-
+                    self.save_data('[' + new_data + ']')
+                else:
+                    self.watch_file = self.get_latest_file_with_prefix()
         except PermissionError:
             logger.error(f'Set up permissions for {self.watch_file}!')
         except FileNotFoundError:
@@ -68,17 +75,18 @@ class OnMyWatch:
 
     @staticmethod
     def save_data(data: str):
-        """Save data into database"""
-        data = '[' + data.strip('[],') + ']'
+        """Save data into a database"""
         try:
             data = json.loads(data)
-            for line in data:
-                print(line)
-
+            for record in data:
+                timestamp = datetime.fromtimestamp(record.pop('timestamp'))
+                for module, pegcounts in record.items():
+                    Performance.objects.create(timestamp=timestamp, module=module, pegcounts=pegcounts)
         except JSONDecodeError as e:
             logger.error(e)
 
     def get_latest_file_with_prefix(self):
+        """Check if new file was created"""
         files = []
         for f in os.listdir(self.watch_directory):
             if f.startswith(self.log_file_pattern):
