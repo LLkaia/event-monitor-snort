@@ -29,7 +29,6 @@ class OnMyWatch:
         """Watch into a log file"""
         logger.info('Running.')
         try:
-            i = 0
             while True:
                 try:
                     self.check_if_file_was_replaced()
@@ -72,7 +71,7 @@ class OnMyWatch:
         new_log_size = os.path.getsize(self.log_file)
         if new_log_size < self.log_size:
             self.save_current_position(0)
-            logger.info(f'Switched to new file')
+            logger.info('Switched to a new file')
         self.log_size = new_log_size
 
     @classmethod
