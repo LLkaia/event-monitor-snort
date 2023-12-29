@@ -25,7 +25,10 @@ class EventListUpdateViewTest(TestCase):
         with self.assertRaises(ValidationError) as context:
             validate_params(entered_params, allowed_params)
 
-        expected_error_message = "You can use only src_addr, src_port, dst_addr, dst_port, sid, proto, page as query filters."
+        expected_error_message = (
+            "You can use only src_addr, src_port, dst_addr, dst_port, sid, proto, page as query filters."
+        )
+
         self.assertEqual(str(context.exception.detail), expected_error_message)
 
     def test_valid_params_empty(self):

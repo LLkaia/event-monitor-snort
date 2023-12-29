@@ -15,7 +15,10 @@ class TestRequestView(TestCase):
 
         with self.assertRaises(ValidationError) as context:
             RequestList.validate_date(invalid_date_str)
-        self.assertEqual(str(context.exception), "{'error': ErrorDetail(string='Use format YYYY-MM-DD HH:MM:SS (you can skip SS, MM, HH)', code='invalid')}")
+        self.assertEqual(
+            str(context.exception),
+            "{'error': ErrorDetail(string='Use format YYYY-MM-DD HH:MM:SS (you can skip SS, MM, HH)', code='invalid')}"
+        )
 
     def test_validate_params(self):
         allowed_params = ['period_start', 'period_stop']
