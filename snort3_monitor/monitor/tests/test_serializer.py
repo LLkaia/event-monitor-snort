@@ -46,7 +46,6 @@ class EventSerializerTest(TestCase):
         serializer = EventSerializer(data=invalid_data)
         self.assertFalse(serializer.is_valid())
         self.assertEqual(len(serializer.errors), 4)
-        # self.assertIn('rule', serializer.errors)
         self.assertIn('timestamp', serializer.errors)
         self.assertIn('src_addr', serializer.errors)
 
