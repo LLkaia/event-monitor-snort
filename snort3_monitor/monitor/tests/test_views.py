@@ -4,34 +4,9 @@ from monitor.views import validate_params
 import unittest
 from unittest import mock
 from monitor.views import EventListUpdate, error404
-from monitor.models import Event, Rule
 
 
 class EventListUpdateViewTest(TestCase):
-
-    def setUp(self):
-        self.rule = Rule.objects.create(
-            sid=1,
-            gid=1,
-            rev=1,
-            action="Test Action",
-            message="Test Message",
-            data_json={"key": "value"}
-        )
-        self.event1 = Event.objects.create(
-            rule=self.rule,
-            timestamp='2023-12-27 16:01:00',
-            src_addr='192.168.1.1',
-            dst_addr='192.168.1.2',
-            proto='TCP'
-        )
-        self.event2 = Event.objects.create(
-            rule=self.rule,
-            timestamp='2023-12-28 10:30:00',
-            src_addr='192.168.1.3',
-            dst_addr='192.168.1.4',
-            proto='UDP'
-        )
 
     def test_valid_params(self):
         allowed_params = ['src_addr', 'src_port', 'dst_addr', 'dst_port', 'sid', 'proto']
@@ -42,7 +17,7 @@ class EventListUpdateViewTest(TestCase):
         except ValidationError:
             self.fail("validate_params raised ValidationError unexpectedly.")
 
-    @unittest.skip
+    @unittest.skip('expect an error')
     def test_invalid_params(self):
         allowed_params = ['src_addr', 'src_port', 'dst_addr', 'dst_port', 'sid', 'proto']
         entered_params = ['src_addr', 'invalid_param']
@@ -50,13 +25,8 @@ class EventListUpdateViewTest(TestCase):
         with self.assertRaises(ValidationError) as context:
             validate_params(entered_params, allowed_params)
 
-        self.assertEqual(
-            context.exception.message,
-            {
-                "error": "Invalid query parameters: invalid_param. "
-                         "Allowed parameters are: src_addr, src_port, dst_addr, dst_port, sid, proto, page."
-            }
-        )
+        expected_error_message = "You can use only src_addr, src_port, dst_addr, dst_port, sid, proto, page as query filters."
+        self.assertEqual(str(context.exception.detail), expected_error_message)
 
     def test_valid_params_empty(self):
         allowed_params = ['src_addr', 'src_port', 'dst_addr', 'dst_port', 'sid', 'proto']

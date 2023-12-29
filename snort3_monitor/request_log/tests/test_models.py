@@ -1,7 +1,6 @@
 from django.test import TestCase
 from request_log.models import Request
-import unittest
-from django.core.exceptions import ValidationError
+from django.db.utils import DataError
 import re
 
 
@@ -22,10 +21,9 @@ class RequestModelTest(TestCase):
         max_lengh = self.request1._meta.get_field('user_addr').max_length
         self.assertEqual(max_lengh, 50)
 
-    @unittest.expectedFailure
     def test_src_addr_max_length(self):
         long_api_address = "x" * 54
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(DataError):
             Request.objects.create(
                 user_addr=long_api_address,
                 http_method="GET",
