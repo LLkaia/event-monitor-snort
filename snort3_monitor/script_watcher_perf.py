@@ -18,60 +18,42 @@ logger = logging.getLogger('monitor')
 
 
 class OnMyWatch:
-    watch_directory: str = '/var/log/snort/'
-    log_file_pattern: str = 'perf_monitor_base.json'
+    log_file: str = '/var/log/snort/perf_monitor_base.json'
     current_position_file: str = '/var/log/snort/current_perf.txt'
-    # watch_directory: str = 'C:\\Users\\Kaya\\Desktop\\TaskLPS\\event-monitor-snort\\'
-    # current_position_file: str = 'C:\\Users\\Kaya\\Desktop\\TaskLPS\\event-monitor-snort\\current_alerts.txt'
 
     def __init__(self):
         self.lock = threading.Lock()
-        self.watch_file = None
+        self.log_size = 0
 
     def run(self):
-        """Start watch into a log file
-
-        For current watch file check for updates every 60 seconds,
-        also check for new file creation every 5 min.
-        """
+        """Watch into a log file"""
         logger.info('Running.')
         try:
             i = 0
             while True:
-                if self.watch_file:
+                try:
+                    self.check_if_file_was_replaced()
                     self.read_data()
-                    i += 1
-                    if i == 5:
-                        self.watch_file = self.get_latest_file_with_prefix()
-                        i = 0
-                else:
-                    self.watch_file = self.get_latest_file_with_prefix()
-                    if self.watch_file:
-                        continue
-                    else:
-                        logger.info('There is no file match with pattern.')
-                time.sleep(60)
+                except FileNotFoundError:
+                    logger.error('File does not exist.')
+                finally:
+                    time.sleep(20)
         except KeyboardInterrupt:
             logger.info('Stopped.')
 
     def read_data(self):
-        """Open file, read and prepare data"""
+        """Open file, read and prepare data for saving"""
         try:
             with self.lock:
-                with open(self.watch_file, encoding='latin-1') as file:
+                with open(self.log_file, encoding='latin-1') as file:
                     file.seek(self.get_current_position())
                     new_data = file.read()
                     self.save_current_position(file.tell())
                 new_data = new_data.strip('[],\n ')
                 if new_data:
                     self.save_data('[' + new_data + ']')
-                else:
-                    self.watch_file = self.get_latest_file_with_prefix()
         except PermissionError:
-            logger.error(f'Set up permissions for {self.watch_file}!')
-        except FileNotFoundError:
-            logger.info('File was deleted.')
-            self.watch_file = self.get_latest_file_with_prefix()
+            logger.error(f'Set up permissions for {self.log_file}!')
 
     @staticmethod
     def save_data(data: str):
@@ -85,21 +67,13 @@ class OnMyWatch:
         except JSONDecodeError as e:
             logger.error(e)
 
-    def get_latest_file_with_prefix(self):
-        """Check if new file was created"""
-        files = []
-        for f in os.listdir(self.watch_directory):
-            if f.startswith(self.log_file_pattern):
-                files.append(os.path.join(self.watch_directory, f))
-        if not files:
-            return None
-        files.sort(key=lambda x: os.path.getctime(x), reverse=True)
-
-        if files[0] != self.watch_file:
+    def check_if_file_was_replaced(self):
+        """Check if new file was created and update log size"""
+        new_log_size = os.path.getsize(self.log_file)
+        if new_log_size < self.log_size:
             self.save_current_position(0)
-            logger.info(f'Switched to file "{files[0]}"')
-
-        return files[0]
+            logger.info(f'Switched to new file')
+        self.log_size = new_log_size
 
     @classmethod
     def get_current_position(cls) -> int:
