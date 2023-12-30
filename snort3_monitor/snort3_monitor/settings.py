@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "monitor.apps.MonitorConfig",
     "rule.apps.RuleConfig",
     "request_log.apps.RequestLogConfig",
+    "performance_log.apps.PerformanceLogConfig",
     "rest_framework",
     "corsheaders",
 ]

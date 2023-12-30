@@ -27,7 +27,7 @@ class OnMyWatch:
     current_position_file -- name of file with current position
     """
     watch_file: str = '/var/log/snort/alert_json.txt'
-    current_position_file: str = 'current_position.txt'
+    current_position_file: str = '/var/log/snort/current_alerts.txt'
 
     def __init__(self):
         """Create Lock for instance"""

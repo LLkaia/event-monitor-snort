@@ -20,7 +20,7 @@ cd event-monitor-snort3
 `docker compose up`
 
 ### Open user interface:
-`localhost:80`
+`localhost:8080`
 ### Check openapi.yml for RESTAPI documentation
 API is available on `localhost:8000`
 ##
@@ -41,6 +41,7 @@ Notice, that we have 4 processes:
 - **server** - DRF and WSGI with RESTAPI functionalities 
 - **snort** - Snort3 IDS which looks for traffic on eth0 interface and logs suspicious traffic into _alert_json.txt_
 - **watcher** - python script which looks for changes in _alert_json.txt_ and adds them in a database
+- **performance** - python script which looks for changes in _perf_monitor_base.json_ and adds them in a database
 - **cron** - runs cron with script for auto clearing table with events in database weekly (00:00 of Monday)
 
 ## Testing with a .pcap File
