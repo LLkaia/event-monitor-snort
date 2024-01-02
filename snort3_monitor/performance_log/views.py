@@ -40,7 +40,7 @@ class PerformanceList(generics.ListAPIView):
             queryset = queryset.filter(module__startswith=module)
 
         # aggregate by delta or sum of pegcounts in each module
-        if self.request.query_params.get('delta') == '1':
+        if self.request.query_params.get('delta') == 'true':
             queryset = self.get_delta_queryset(queryset, period_start, period_stop)
         else:
             queryset = self.get_sum_queryset(queryset, period_start, period_stop)
