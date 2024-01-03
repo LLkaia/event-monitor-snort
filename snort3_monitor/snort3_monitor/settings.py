@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "monitor.apps.MonitorConfig",
     "rule.apps.RuleConfig",
+    "shell.apps.ShellConfig",
     "request_log.apps.RequestLogConfig",
     "performance_log.apps.PerformanceLogConfig",
     "rest_framework",
