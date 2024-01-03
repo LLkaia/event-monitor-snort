@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from rule.serializers import RuleSerializer
 from rule.models import Rule
-from script_rules import update_pulled_pork
+from update_rules import update_pulled_pork
 
 
 logger = logging.getLogger('monitor')
