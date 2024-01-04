@@ -14,6 +14,6 @@ def post_shell_command(request):
     """
     command = request.data.get('command')
     if not command:
-        return Response({'error': 'No command provided'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Provide a command!'}, status=status.HTTP_204_NO_CONTENT)
     stdout = run_command(command)
     return Response({'message': stdout}, status=status.HTTP_200_OK)
