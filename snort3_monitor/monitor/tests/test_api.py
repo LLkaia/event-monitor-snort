@@ -105,7 +105,7 @@ class EventAPIListViewTest(APITestCase):
         url = reverse('event-list-update')
         response = self.client.patch(url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(response.data, {"message": "All events are marked as deleted."})
 
         events = Event.objects.all()
