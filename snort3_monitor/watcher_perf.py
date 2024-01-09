@@ -27,18 +27,18 @@ class OnMyWatch:
 
     def run(self):
         """Watch into a log file"""
-        logger.info('Running.')
+        logger.info('Performance watcher running.')
         try:
             while True:
                 try:
                     self.check_if_file_was_replaced()
                     self.read_data()
                 except FileNotFoundError:
-                    logger.error('File does not exist.')
+                    logger.error(f'{self.log_file} does not exist.')
                 finally:
                     time.sleep(20)
         except KeyboardInterrupt:
-            logger.info('Stopped.')
+            logger.info('Performance watcher stopped.')
 
     def read_data(self):
         """Open file, read and prepare data for saving"""
