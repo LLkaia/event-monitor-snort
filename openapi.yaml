@@ -118,12 +118,16 @@ components:
     Performance:
       type: object
       properties:
+        timestamp:
+          type: string
+          format: timestamp
         module:
           type: string
         pegcounts:
           type: string
           format: json
       example:
+        timestamp: "2024-01-10T15:59:29+02:00"
         module: search_engine
         pegcounts:
           max_queued: 498
