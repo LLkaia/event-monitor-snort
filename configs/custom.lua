@@ -29,3 +29,10 @@ perf_monitor =
     format = 'json',
     packets = 0
 }
+
+profiler =
+{
+    modules = {show = false},
+    memory = {show = false},
+    rules = {count = 10}
+}

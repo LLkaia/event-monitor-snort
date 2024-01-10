@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 
 from django.db.models import QuerySet
-from django.utils.timezone import make_aware, utc
+from django.utils.timezone import make_aware
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 
@@ -51,7 +51,7 @@ class RequestList(generics.ListAPIView):
         for frmt in formats:
             try:
                 date = datetime.strptime(date, frmt)
-                return make_aware(date, utc)
+                return make_aware(date)
             except ValueError:
                 pass
         raise ValidationError({"error": "Use format YYYY-MM-DD HH:MM:SS (you can skip SS, MM, HH)"})

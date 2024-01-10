@@ -2,7 +2,7 @@ from collections import Counter
 from datetime import timedelta, datetime
 
 from django.db.models import QuerySet
-from django.utils.timezone import make_aware, utc
+from django.utils.timezone import make_aware
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -67,7 +67,7 @@ class PerformanceList(generics.ListAPIView):
         for frmt in formats:
             try:
                 date = datetime.strptime(date, frmt)
-                return make_aware(date, utc)
+                return make_aware(date)
             except ValueError:
                 pass
         raise ValidationError({"error": "Use format YYYY-MM-DD HH:MM:SS (you can skip SS, MM, HH)"})
@@ -95,10 +95,10 @@ class PerformanceList(generics.ListAPIView):
         for module in modules:
             filtered_queryset = queryset.filter(module=module)
             closest_to_start = min(filtered_queryset,
-                                   key=lambda record: abs(make_aware(record.timestamp, utc) - period_start))
+                                   key=lambda record: abs(record.timestamp - period_start))
             start_pegs = Counter(closest_to_start.pegcounts)
             closest_to_end = min(filtered_queryset,
-                                 key=lambda record: abs(make_aware(record.timestamp, utc) - period_stop))
+                                 key=lambda record: abs(record.timestamp - period_stop))
             end_pegs = Counter(closest_to_end.pegcounts)
             start_pegs.subtract(end_pegs)
             new_pegcounts = {key: abs(value) for key, value in start_pegs.items()}

@@ -35,16 +35,16 @@ class OnMyWatch:
 
     def run(self):
         """Start watch in log file"""
-        logger.info('Running.')
+        logger.info('Alert watcher running.')
         try:
             while True:
                 if os.path.exists(self.watch_file):
                     self.read_data()
                 else:
-                    logger.error('Watch file does not exist.')
+                    logger.error(f'{self.watch_file} file does not exist.')
                 time.sleep(5)
         except KeyboardInterrupt:
-            logger.info('Stopped.')
+            logger.info('Alert watcher stopped.')
 
     def read_data(self):
         """Open file and read data"""

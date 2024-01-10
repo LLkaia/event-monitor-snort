@@ -41,8 +41,8 @@ def update_pulled_pork(file: str) -> int:
         raise RuntimeError('File is empty!')
     count = process_data(data)
 
-    os.system("supervisorctl restart snort")
-
+    if count > 0:
+        os.system("supervisorctl restart snort")
     return count
 
 

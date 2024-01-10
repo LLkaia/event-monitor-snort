@@ -24,7 +24,6 @@ class RuleCreate(APIView):
         try:
             count = update_pulled_pork('rules.txt')
             logger.info(f"{count} new rules have been added.")
-            connections.close_all()
         except RuntimeError as e:
             logger.error(e)
         finally:
@@ -32,7 +31,7 @@ class RuleCreate(APIView):
 
     def post(self, request, *args, **kwargs) -> Response:
         """Start rules updating and send immediate response"""
-        threading.Thread(target=self.background_update).start()
+        threading.Thread(target=self.background_update, name='Updating rules').start()
         return Response({'message': 'Update process started.'}, status=status.HTTP_202_ACCEPTED)
 
 

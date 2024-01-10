@@ -58,7 +58,7 @@ class EventCountList(generics.ListAPIView):
 
         Client can use only allowed_params in query.
         """
-        queryset = Event.objects.all()
+        queryset = super().get_queryset()
         periods = {
             'all': None,
             'day': timedelta(days=1),
