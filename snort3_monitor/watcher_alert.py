@@ -8,7 +8,7 @@ from json import JSONDecodeError
 
 import django
 from django.http import Http404
-
+from django.utils.timezone import make_aware
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
 django.setup()
@@ -74,7 +74,7 @@ class OnMyWatch:
                 event_data = {key: value for key, value in event_data.items() if key in allowed_fields}
 
                 # save event
-                timestamp = datetime.fromtimestamp(event_data.pop('seconds'))
+                timestamp = make_aware(datetime.fromtimestamp(event_data.pop('seconds')))
                 rule = Rule.get_rule(event_data.pop('sid'), event_data.pop('rev'), event_data.pop('gid'))
                 new_event = Event(**event_data)
                 new_event.rule = rule
