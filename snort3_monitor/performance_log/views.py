@@ -1,5 +1,5 @@
 from collections import Counter
-from datetime import timedelta, datetime
+from datetime import datetime
 
 from django.db.models import QuerySet
 from django.utils.timezone import make_aware
@@ -8,16 +8,16 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from performance_log.models import Performance
-from performance_log.serializers import PerformanceSerializer
+from performance_log.serializers import PerformanceSerializer, PerformanceDeltaSerializer
 
 
 class PerformanceList(generics.ListAPIView):
     queryset = Performance.objects.all()
-    serializer_class = PerformanceSerializer
 
     def get_queryset(self):
         """Process query params"""
         queryset = super().get_queryset()
+        PerformanceList.serializer_class = PerformanceSerializer
 
         # check for only allowed params
         allowed_params = ['period_start', 'period_stop', 'module', 'delta']
@@ -30,20 +30,20 @@ class PerformanceList(generics.ListAPIView):
         if not (period_start and period_stop):
             raise ValidationError({"error": "You should define 'period_start' and 'period_stop'."})
 
-        # checks if format is proper
+        # checks if format is proper and filter by them
         period_start = self.validate_date(period_start)
-        period_stop = self.validate_date(period_stop) + timedelta(days=1)
+        period_stop = self.validate_date(period_stop)
+        queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop)
 
         # filter by 'module' prefix
         module = self.request.query_params.get('module')
         if module:
             queryset = queryset.filter(module__startswith=module)
 
-        # aggregate by delta or sum of pegcounts in each module
+        # aggregate pegcounts in each module
         if self.request.query_params.get('delta') == 'true':
-            queryset = self.get_delta_queryset(queryset, period_start, period_stop)
-        else:
-            queryset = self.get_sum_queryset(queryset, period_start, period_stop)
+            PerformanceList.serializer_class = PerformanceDeltaSerializer
+            queryset = self.get_sum_queryset(queryset)
 
         return queryset
 
@@ -86,32 +86,10 @@ class PerformanceList(generics.ListAPIView):
                 {"error": f"You can use only {', '.join(allowed)} as query filters."})
 
     @staticmethod
-    def get_delta_queryset(queryset: QuerySet, period_start: datetime, period_stop: datetime):
-        """Calculate pegcounts delta between two
-        records closest to mentioned timestamps.
-        """
-        modules = set(record.module for record in queryset)
-        new_queryset = []
-        for module in modules:
-            filtered_queryset = queryset.filter(module=module)
-            closest_to_start = min(filtered_queryset,
-                                   key=lambda record: abs(record.timestamp - period_start))
-            start_pegs = Counter(closest_to_start.pegcounts)
-            closest_to_end = min(filtered_queryset,
-                                 key=lambda record: abs(record.timestamp - period_stop))
-            end_pegs = Counter(closest_to_end.pegcounts)
-            start_pegs.subtract(end_pegs)
-            new_pegcounts = {key: abs(value) for key, value in start_pegs.items()}
-            new_record = {'module': module, 'pegcounts': new_pegcounts}
-            new_queryset.append(new_record)
-        return new_queryset
-
-    @staticmethod
-    def get_sum_queryset(queryset: QuerySet, period_start: datetime, period_stop: datetime):
+    def get_sum_queryset(queryset: QuerySet):
         """Calculate pegcounts sum of all records
         between two mentioned timestamps.
         """
-        queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop)
         aggregated_queryset = {}
         for record in queryset:
             if record.module not in aggregated_queryset.keys():

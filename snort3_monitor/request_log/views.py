@@ -32,7 +32,7 @@ class RequestList(generics.ListAPIView):
 
         # checks if format is proper
         period_start = self.validate_date(period_start)
-        period_stop = self.validate_date(period_stop) + timedelta(days=1)
+        period_stop = self.validate_date(period_stop)
 
         # checks if period is less than week
         if period_stop - period_start > timedelta(days=7):

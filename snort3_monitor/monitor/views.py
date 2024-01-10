@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.db.models import Count, Value
 from django.db.models.functions import Concat
 from django.db.models import F
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -44,7 +45,7 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
         return queryset.order_by('id')
 
     def patch(self, request, *args, **kwargs) -> Response:
-        """Mark all events as deleted to ide them"""
+        """Mark all events as deleted to exclude them"""
         queryset = self.get_queryset()
         queryset.update(mark_as_deleted=True)
         return Response({"message": "All events are marked as deleted."}, status=status.HTTP_204_NO_CONTENT)
@@ -79,7 +80,7 @@ class EventCountList(generics.ListAPIView):
         # check if period is known and filter it
         if params.get('period') is not None:
             if periods.get(params.get('period')) is not None:
-                period_start = datetime.now() - periods[params.get('period')]
+                period_start = timezone.now() - periods[params.get('period')]
                 queryset = queryset.filter(timestamp__gte=period_start)
             else:
                 if params.get('period') != 'all':
