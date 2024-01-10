@@ -7,7 +7,7 @@ from datetime import datetime
 from json import JSONDecodeError
 
 import django
-
+from django.utils.timezone import make_aware
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
 django.setup()
@@ -60,7 +60,7 @@ class OnMyWatch:
         try:
             data = json.loads(data)
             for record in data:
-                timestamp = datetime.fromtimestamp(record.pop('timestamp'))
+                timestamp = make_aware(datetime.fromtimestamp(record.pop('timestamp')))
                 for module, pegcounts in record.items():
                     Performance.objects.create(timestamp=timestamp, module=module, pegcounts=pegcounts)
         except JSONDecodeError as e:
