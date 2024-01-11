@@ -1,6 +1,7 @@
 from django.test import TestCase
 from request_log.serializers import RequestSerializer
 from request_log.models import Request
+from django.utils import timezone
 
 
 class RequestSerializerTest(TestCase):
@@ -9,7 +10,7 @@ class RequestSerializerTest(TestCase):
         self.request_1 = Request.objects.create(
             user_addr="172.18.0.1",
             http_method="GET",
-            timestamp="2023-12-26T10:17:31.480206",
+            timestamp=timezone.now(),
             endpoint="/api/v1/rules/",
             response=200,
             request_data={}
@@ -18,7 +19,8 @@ class RequestSerializerTest(TestCase):
     def test_timestamp(self):
         serializer = RequestSerializer(self.request_1)
         serializer_data = serializer.data
-        self.assertEqual(serializer_data["timestamp"], self.request_1.timestamp.isoformat())
+        serializer_timestamp = timezone.datetime.fromisoformat(serializer_data["timestamp"])
+        self.assertEqual(serializer_timestamp, self.request_1.timestamp)
 
     def test_http_method(self):
         serializer = RequestSerializer(self.request_1)

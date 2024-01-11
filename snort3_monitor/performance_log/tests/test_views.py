@@ -53,11 +53,8 @@ class TestPerformanceList(TestCase):
         PerformanceList.validate_params(entered_params, allowed_params)
 
     def test_get_sum_queryset(self):
-        queryset = Performance.objects.all()
-        period_start = datetime.datetime(2024, 1, 1)
-        period_stop = datetime.datetime(2024, 1, 2)
-        result = PerformanceList.get_sum_queryset(queryset, period_start, period_stop)
-
+        queryset = Performance.objects.filter(module="binder")
+        result = PerformanceList.get_sum_queryset(queryset)
         expected_result = [
             {'module': 'binder', 'pegcounts': Counter({
                 "inspects": 34,
@@ -66,21 +63,4 @@ class TestPerformanceList(TestCase):
                 "service_changes": 7
             })},
         ]
-
-        self.assertEqual(result, expected_result)
-
-    def test_get_delta_queryset(self):
-        expected_result = [
-            {'module': 'binder', 'pegcounts': {
-                "inspects": 0,
-                "new_flows": 0,
-                "raw_packets": 0,
-                "service_changes": 0
-            }},
-        ]
-
-        queryset = Performance.objects.all()
-        period_start = make_aware(datetime.datetime(2024, 1, 1), timezone.utc)
-        period_stop = make_aware(datetime.datetime(2024, 1, 2), timezone.utc)
-        result = PerformanceList.get_delta_queryset(queryset, period_start, period_stop)
         self.assertEqual(result, expected_result)

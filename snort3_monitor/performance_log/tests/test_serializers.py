@@ -1,13 +1,14 @@
 from django.test import TestCase
 from performance_log.serializers import PerformanceSerializer
 from performance_log.models import Performance
+from django.utils import timezone
 
 
 class SerializrTest(TestCase):
 
     def setUp(self):
         self.log_1 = Performance.objects.create(
-            timestamp='2024-01-01',
+            timestamp=timezone.now(),
             module="binder",
             pegcounts={
                 "inspects": 34,
@@ -20,7 +21,7 @@ class SerializrTest(TestCase):
     def test_all_result(self):
         serializer = PerformanceSerializer(self.log_1)
         serializer_data = serializer.data
-        self.assertEqual(len(serializer_data), 2)
+        self.assertEqual(len(serializer_data), 3)
 
     def test_module(self):
         serializer = PerformanceSerializer(self.log_1)

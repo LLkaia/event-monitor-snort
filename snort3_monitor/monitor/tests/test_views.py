@@ -4,6 +4,7 @@ from unittest import mock
 from monitor.views import EventListUpdate, error404
 from rest_framework.exceptions import ValidationError
 from monitor.models import Event, Rule
+from django.utils import timezone
 
 
 class EventListUpdateViewTest(TestCase):
@@ -19,14 +20,14 @@ class EventListUpdateViewTest(TestCase):
         )
         self.event1 = Event.objects.create(
             rule=self.rule,
-            timestamp='2023-12-27 16:01:00',
+            timestamp=timezone.make_aware(timezone.datetime(2023, 12, 27, 16, 1, 0)),
             src_addr='192.168.1.1',
             dst_addr='192.168.1.2',
             proto='TCP'
         )
         self.event2 = Event.objects.create(
             rule=self.rule,
-            timestamp='2023-12-28 10:30:00',
+            timestamp=timezone.make_aware(timezone.datetime(2023, 12, 28, 10, 30, 0)),
             src_addr='192.168.1.3',
             dst_addr='192.168.1.4',
             proto='UDP'

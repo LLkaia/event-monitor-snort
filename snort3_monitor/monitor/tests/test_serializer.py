@@ -1,8 +1,8 @@
 from django.test import TestCase
 from monitor.models import Event
 from rule.models import Rule
-import datetime
 from monitor.serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer
+from django.utils import timezone
 
 
 class EventSerializerTest(TestCase):
@@ -19,7 +19,7 @@ class EventSerializerTest(TestCase):
 
         self.event = Event.objects.create(
             rule=self.rule,
-            timestamp=datetime.datetime.now(),
+            timestamp=timezone.now(),
             src_addr="192.168.1.1",
             proto="TCP",
             src_port=1234,
@@ -32,7 +32,8 @@ class EventSerializerTest(TestCase):
         serialized_data = serializer.data
 
         self.assertEqual(serialized_data["id"], self.event.pk)
-        self.assertEqual(serialized_data["timestamp"], self.event.timestamp.isoformat())
+        expected_timestamp = timezone.localtime(self.event.timestamp).isoformat()
+        self.assertEqual(serialized_data["timestamp"], expected_timestamp)
         self.assertEqual(serialized_data["src_addr"], self.event.src_addr)
         self.assertEqual(serialized_data["proto"], self.event.proto)
 
