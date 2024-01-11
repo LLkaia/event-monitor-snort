@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest.mock import patch, mock_open
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.test import TransactionTestCase
@@ -40,37 +41,37 @@ class RuleAPITests(APITestCase):
 class RuleUpdateAPITests(TransactionTestCase):
     logger = logging.getLogger('monitor')
 
-    @patch('script_rules.os.system', side_effect=(0, 0, 0))
+    @patch('update_rules.os.system', side_effect=(0, 0, 0))
     def test_post_updating_valid_rules(self, patched_system):
         with open('rule/fixtures/valid_rules.txt') as f:
             self.valid_rules = f.read()
         url = reverse('rules-create')
 
         with self.assertLogs(self.logger, level='INFO') as log:
-            with patch('script_rules.open', mock_open(read_data=self.valid_rules)):
+            with patch('update_rules.open', mock_open(read_data=self.valid_rules)):
                 self.client.post(url)
             time.sleep(0.2)
             self.assertIn('2 new rules have been added.', log.output[0])
 
-    @patch('script_rules.os.system', side_effect=(0, 0, 0))
+    @patch('update_rules.os.system', side_effect=(0, 0, 0))
     def test_post_updating_invalid_rules(self, patched_system):
         with open('rule/fixtures/invalid_rules.txt') as f:
             self.invalid_rules = f.read()
         url = reverse('rules-create')
 
         with self.assertLogs(self.logger, level='ERROR') as log:
-            with patch('script_rules.open', mock_open(read_data=self.invalid_rules)):
+            with patch('update_rules.open', mock_open(read_data=self.invalid_rules)):
                 self.client.post(url)
             time.sleep(0.2)
             self.assertIn("Rule's data is not full:", log.output[0])
 
-    @patch('script_rules.os.system', side_effect=(0, 0, 0))
+    @patch('update_rules.os.system', side_effect=(0, 0, 0))
     def test_post_rule_with_old_rev(self, patched_system):
         Rule.objects.create(**{"gid": 10, "sid": 10, "rev": 1})
         url = reverse('rules-create')
 
         with self.assertLogs(self.logger, level='INFO') as log:
-            with patch('script_rules.open', mock_open(
+            with patch('update_rules.open', mock_open(
                     read_data='{"gid": 10, "sid": 10, "rev": 2, "action": "allow", "msg": "smth"}')):
                 self.client.post(url)
             time.sleep(0.2)
@@ -78,14 +79,14 @@ class RuleUpdateAPITests(TransactionTestCase):
             self.assertEqual(rule.rev, 2)
             self.assertIn('1 new rules have been added.', log.output[0])
 
-    @patch('script_rules.os.system', side_effect=(0, 0, 0))
+    @patch('update_rules.os.system', side_effect=(0, 0, 0))
     def test_post_rule_with_old_rev_bind_to_event(self, patched_system):
         new_rule = Rule.objects.create(**{"gid": 10, "sid": 10, "rev": 1})
-        Event.objects.create(rule=new_rule, timestamp=datetime.now())
+        Event.objects.create(rule=new_rule, timestamp=timezone.now())
         url = reverse('rules-create')
 
         with self.assertLogs(self.logger, level='INFO') as log:
-            with patch('script_rules.open', mock_open(
+            with patch('update_rules.open', mock_open(
                     read_data='{"gid": 10, "sid": 10, "rev": 2, "action": "allow", "msg": "smth"}')):
                 self.client.post(url)
             time.sleep(0.2)

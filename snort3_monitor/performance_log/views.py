@@ -33,7 +33,7 @@ class PerformanceList(generics.ListAPIView):
         # checks if format is proper and filter by them
         period_start = self.validate_date(period_start)
         period_stop = self.validate_date(period_stop)
-        queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop)
+        queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop).order_by('timestamp')
 
         # filter by 'module' prefix
         module = self.request.query_params.get('module')
