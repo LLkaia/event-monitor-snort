@@ -1,9 +1,9 @@
 from django.test import TestCase
 from monitor.models import Event
 from rule.models import Rule
-import datetime
 from django.core.exceptions import ValidationError
 from django.db.utils import DataError
+from django.utils import timezone
 
 
 class EventModelTest(TestCase):
@@ -19,7 +19,7 @@ class EventModelTest(TestCase):
 
         self.event = Event.objects.create(
             rule=self.rule,
-            timestamp=datetime.datetime.now(),
+            timestamp=timezone.now(),
             src_addr="192.168.1.1",
             proto="TCP")
 
@@ -46,7 +46,7 @@ class EventModelTest(TestCase):
         long_address = "x" * 129
         with self.assertRaises(DataError):
             Event.objects.create(rule=self.rule,
-                                 timestamp=datetime.datetime.now(),
+                                 timestamp=timezone.now(),
                                  src_addr=long_address)
 
     def test_proto(self):

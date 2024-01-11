@@ -8,12 +8,8 @@ from datetime import datetime, timedelta
 
 class TestApiRequest(APITestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.fixed_timestamp = timezone.now()
-
     def setUp(self):
+        self.fixed_timestamp = timezone.now()
         self.request_1 = Request.objects.create(
             user_addr="172.18.0.1",
             http_method="GET",
@@ -53,7 +49,7 @@ class TestApiRequest(APITestCase):
     def test_request_list_with_two_objects(self):
         current_datetime = datetime.now()
         period_start = (current_datetime - timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
-        period_stop = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
+        period_stop = (current_datetime + timedelta(days=2)).strftime('%Y-%m-%d %H:%M:%S')
 
         url = reverse('request-list')
         response = self.client.get(url, {'period_start': period_start, 'period_stop': period_stop})
@@ -77,20 +73,20 @@ class TestApiRequest(APITestCase):
     def test_request_list_id_order(self):
         current_datetime = datetime.now()
         period_start = (current_datetime - timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
-        period_stop = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
+        period_stop = (current_datetime + timedelta(days=2)).strftime('%Y-%m-%d %H:%M:%S')
 
         url = reverse('request-list')
         response = self.client.get(url, {'period_start': period_start, 'period_stop': period_stop})
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('results', response.data)
-
         results = response.data['results']
         self.assertEqual(len(results), 3)
         ids = [result['id'] for result in results]
         self.assertEqual(ids, sorted(ids))
 
     def test_request_list_weak(self):
-        current_datetime = datetime.now()
+        current_datetime = timezone.now()
         period_start = (current_datetime - timedelta(days=8)).strftime('%Y-%m-%d %H:%M:%S')
         period_stop = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 

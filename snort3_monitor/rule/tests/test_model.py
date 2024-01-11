@@ -1,4 +1,4 @@
-from datetime import datetime
+from django.utils import timezone
 
 from django.test import TestCase
 from django.db.utils import IntegrityError, DataError
@@ -41,7 +41,7 @@ class RuleModelGeneralTests(TestCase):
         }
         cls.rule = Rule.objects.create(**rule1)
         cls.rule_with_event = Rule.objects.create(**rule2)
-        cls.event = Event.objects.create(rule=cls.rule_with_event, timestamp=datetime.now())
+        cls.event = Event.objects.create(rule=cls.rule_with_event, timestamp=timezone.now())
 
     def test_rule_exists(self):
         instance = Rule.get_rule(gid=1, sid=9, rev=1)

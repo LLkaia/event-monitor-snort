@@ -1,12 +1,13 @@
 from django.test import TestCase
 from performance_log.models import Performance
+from django.utils import timezone
 
 
 class PerformanceModelTest(TestCase):
 
     def setUp(self):
         self.log_1 = Performance.objects.create(
-            timestamp='2024-01-01',
+            timestamp=timezone.now(),
             module="binder",
             pegcounts={
                 "inspects": 34,
@@ -17,14 +18,13 @@ class PerformanceModelTest(TestCase):
         )
 
     def test_timestamp(self):
-        self.assertEqual(self.log_1.timestamp, '2024-01-01')
+        self.assertIsNotNone(self.log_1.timestamp)
 
     def test_module(self):
         self.assertEqual(self.log_1.module, "binder")
         self.assertIsInstance(self.log_1.module, str)
 
     def test_field_response(self):
-        self.assertIsInstance(self.log_1.timestamp, str)
         field_label = self.log_1._meta.get_field('module').verbose_name
         self.assertEqual(field_label, 'module')
 

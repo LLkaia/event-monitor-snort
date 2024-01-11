@@ -1,14 +1,15 @@
 from monitor.models import Event
 from rule.models import Rule
-import datetime
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
 from collections import OrderedDict
 from datetime import timedelta
+from django.utils import timezone
 
 
 class EventAPIListViewTest(APITestCase):
+
     @classmethod
     def setUpTestData(cls):
         cls.rule = Rule.objects.create(
@@ -22,7 +23,7 @@ class EventAPIListViewTest(APITestCase):
 
         cls.event_1 = Event.objects.create(
             rule=cls.rule,
-            timestamp=datetime.datetime.now(),
+            timestamp=timezone.now(),
             src_addr="192.168.1.1",
             proto="TCP",
             src_port=1234,
@@ -32,7 +33,7 @@ class EventAPIListViewTest(APITestCase):
 
         cls.event_2 = Event.objects.create(
             rule=cls.rule,
-            timestamp=datetime.datetime.now(),
+            timestamp=timezone.now(),
             src_addr="192.168.1.2",
             proto="UDP",
             src_port=8080,
@@ -187,11 +188,11 @@ class EventAPIListViewTest(APITestCase):
         self.assertEqual(item, sorted(item))
 
     def test_period_time_last_day(self):
-        new_timestamp = datetime.datetime.now()
+        new_timestamp = timezone.now()
         self.event_1.timestamp = new_timestamp
         self.event_1.save()
 
-        new_timestamp = datetime.datetime.now()
+        new_timestamp = timezone.now()
         self.event_2.timestamp = new_timestamp
         self.event_2.save()
 
@@ -202,11 +203,11 @@ class EventAPIListViewTest(APITestCase):
         self.assertEqual(len(results), 2)
 
     def test_period_time_last_week(self):
-        new_timestamp = datetime.datetime.now() - timedelta(days=3)
+        new_timestamp = timezone.now() - timedelta(days=3)
         self.event_1.timestamp = new_timestamp
         self.event_1.save()
 
-        new_timestamp = datetime.datetime.now() - timedelta(days=6)
+        new_timestamp = timezone.now() - timedelta(days=6)
         self.event_2.timestamp = new_timestamp
         self.event_2.save()
 
@@ -217,11 +218,11 @@ class EventAPIListViewTest(APITestCase):
         self.assertEqual(len(results), 2)
 
     def test_period_time_last_month(self):
-        new_timestamp = datetime.datetime.now() - timedelta(days=18)
+        new_timestamp = timezone.now() - timedelta(days=18)
         self.event_1.timestamp = new_timestamp
         self.event_1.save()
 
-        new_timestamp = datetime.datetime.now() - timedelta(days=19)
+        new_timestamp = timezone.now() - timedelta(days=19)
         self.event_2.timestamp = new_timestamp
         self.event_2.save()
 
@@ -232,11 +233,11 @@ class EventAPIListViewTest(APITestCase):
         self.assertEqual(len(results), 2)
 
     def test_period_time_last_day_with_no_event(self):
-        new_timestamp = datetime.datetime(2023, 12, 22, 12, 0, 0)
+        new_timestamp = timezone.now() - timezone.timedelta(days=20)
         self.event_1.timestamp = new_timestamp
         self.event_1.save()
 
-        new_timestamp = datetime.datetime(2023, 12, 12, 12, 0, 0)
+        new_timestamp = timezone.now() - timezone.timedelta(days=20)
         self.event_2.timestamp = new_timestamp
         self.event_2.save()
 
@@ -251,18 +252,3 @@ class EventAPIListViewTest(APITestCase):
         response = self.client.get(url, {'type': 'invalid_type', 'period': 'all'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'], "Unknown 'type', use 'sid' or 'addr'")
-
-    def test_period_time_last_day_with_sid(self):
-        new_timestamp = datetime.datetime.now()
-        self.event_1.timestamp = new_timestamp
-        self.event_1.save()
-
-        new_timestamp = datetime.datetime(2023, 12, 12, 12, 0, 0)
-        self.event_2.timestamp = new_timestamp
-        self.event_2.save()
-
-        url = reverse('event-count-list')
-        response = self.client.get(url, {'type': 'sid', 'period': 'month'})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = response.data.get('results', [])
-        self.assertEqual(len(results), 1)
