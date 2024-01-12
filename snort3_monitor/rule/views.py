@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from rule.serializers import RuleSerializer
 from rule.models import Rule
-from update_rules import update_pulled_pork
+from update_rules import update_pulledpork_rules, dump_rules
 
 
 logger = logging.getLogger('monitor')
@@ -22,7 +22,8 @@ class RuleCreate(APIView):
         """Perform background updating of rules"""
         db_connection = connections['default']
         try:
-            count = update_pulled_pork('rules.txt')
+            update_pulledpork_rules()
+            count = dump_rules('rules.txt')
             logger.info(f"{count} new rules have been added.")
         except RuntimeError as e:
             logger.error(e)

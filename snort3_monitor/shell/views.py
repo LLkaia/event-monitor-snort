@@ -21,7 +21,10 @@ def post_shell_command(request: Request) -> Response:
     command = request.data.get('command')
     if not command:
         return Response({'message': 'Provide a command!'}, status=status.HTTP_204_NO_CONTENT)
-    stdout = run_command(command)
+    try:
+        stdout = run_command(command)
+    except OSError:
+        return Response({'message': 'Shell is not available!'}, status=status.HTTP_204_NO_CONTENT)
     return Response({'message': stdout}, status=status.HTTP_200_OK)
 
 
