@@ -1,7 +1,11 @@
 from django.test import TestCase
-from unittest.mock import patch, MagicMock
-from shell.telnet import run_command
-from unittest.mock import call
+from unittest.mock import patch, MagicMock, call
+from unittest import mock
+from shell.telnet import run_command, run_profiler
+from shell.models import Profiler
+
+HOST = 'localhost'
+PORT = 12345
 
 
 class TelnetTestCase(TestCase):
@@ -23,3 +27,28 @@ class TelnetTestCase(TestCase):
         mock_tn_instance.read_until.assert_has_calls([expected_call], any_order=False)
         mock_tn_instance.write.assert_called_once_with(b'host_cache.get_stats()\n')
         self.assertEqual(result, expected_output)
+
+    @patch('time.sleep')
+    @patch('telnetlib.Telnet')
+    def test_run_profiler(self, mock_telnet, mock_sleep):
+        mock_telnet.return_value.read_until.side_effect = [
+            b'o")~',
+            b'o")~',
+            b'o")~',
+            b'o")~',
+            b'o")~' + '{"rules": ["rule1", "rule2"]}'.encode('utf-8') + b'o")~',
+            b'o")~'
+        ]
+        mock_telnet.return_value.write.return_value = None
+
+        record = Profiler.objects.create()
+        wait = 10
+
+        run_profiler(record, wait)
+
+        mock_telnet.assert_has_calls([
+            mock.call(HOST, PORT),
+
+        ])
+        mock_sleep.assert_called_once_with(wait)
+        self.assertEqual(record.rules, None)
