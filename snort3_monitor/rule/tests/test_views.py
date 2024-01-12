@@ -31,18 +31,22 @@ class RuleCreateViewTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(response.data, {'message': 'Update process started.'})
 
-    @patch('rule.views.update_pulled_pork', return_value=1)
-    def test_successful_updating(self, patched_update_pulled_pork):
+    @patch('rule.views.update_pulledpork_rules', return_value=None)
+    @patch('rule.views.dump_rules', return_value=1)
+    def test_successful_updating(self, patched_dump_rules, patched_update_pulledpork_rules):
         with self.assertLogs(self.logger, level='INFO') as log:
             self.view.background_update()
-            patched_update_pulled_pork.assert_called()
+            patched_update_pulledpork_rules.assert_called()
+            patched_dump_rules.assert_called()
             self.assertIn('1 new rules have been added.', log.output[0])
 
-    @patch('rule.views.update_pulled_pork', side_effect=RuntimeError('Test error'))
-    def test_unsuccessful_updating(self, patched_update_pulled_pork):
+    @patch('rule.views.update_pulledpork_rules', return_value=None)
+    @patch('rule.views.dump_rules', side_effect=RuntimeError('Test error'))
+    def test_unsuccessful_updating(self, patched_dump_rules, patched_update_pulledpork_rules):
         with self.assertLogs(self.logger, level='ERROR') as log:
             self.view.background_update()
-            patched_update_pulled_pork.assert_called()
+            patched_update_pulledpork_rules.assert_called()
+            patched_dump_rules.assert_called()
             self.assertIn('Test error', log.output[0])
 
 

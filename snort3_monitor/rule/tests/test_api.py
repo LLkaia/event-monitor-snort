@@ -41,8 +41,9 @@ class RuleAPITests(APITestCase):
 class RuleUpdateAPITests(TransactionTestCase):
     logger = logging.getLogger('monitor')
 
+    @patch('rule.views.update_pulledpork_rules', return_value=None)
     @patch('update_rules.os.system', side_effect=(0, 0, 0))
-    def test_post_updating_valid_rules(self, patched_system):
+    def test_post_updating_valid_rules(self, patched_system, patched_update):
         with open('rule/fixtures/valid_rules.txt') as f:
             self.valid_rules = f.read()
         url = reverse('rules-create')
@@ -53,8 +54,9 @@ class RuleUpdateAPITests(TransactionTestCase):
             time.sleep(0.2)
             self.assertIn('2 new rules have been added.', log.output[0])
 
+    @patch('rule.views.update_pulledpork_rules', return_value=None)
     @patch('update_rules.os.system', side_effect=(0, 0, 0))
-    def test_post_updating_invalid_rules(self, patched_system):
+    def test_post_updating_invalid_rules(self, patched_system, patched_update):
         with open('rule/fixtures/invalid_rules.txt') as f:
             self.invalid_rules = f.read()
         url = reverse('rules-create')
@@ -65,8 +67,9 @@ class RuleUpdateAPITests(TransactionTestCase):
             time.sleep(0.2)
             self.assertIn("Rule's data is not full:", log.output[0])
 
+    @patch('rule.views.update_pulledpork_rules', return_value=None)
     @patch('update_rules.os.system', side_effect=(0, 0, 0))
-    def test_post_rule_with_old_rev(self, patched_system):
+    def test_post_rule_with_old_rev(self, patched_system, patched_update):
         Rule.objects.create(**{"gid": 10, "sid": 10, "rev": 1})
         url = reverse('rules-create')
 
@@ -79,8 +82,9 @@ class RuleUpdateAPITests(TransactionTestCase):
             self.assertEqual(rule.rev, 2)
             self.assertIn('1 new rules have been added.', log.output[0])
 
+    @patch('rule.views.update_pulledpork_rules', return_value=None)
     @patch('update_rules.os.system', side_effect=(0, 0, 0))
-    def test_post_rule_with_old_rev_bind_to_event(self, patched_system):
+    def test_post_rule_with_old_rev_bind_to_event(self, patched_system, patched_update):
         new_rule = Rule.objects.create(**{"gid": 10, "sid": 10, "rev": 1})
         Event.objects.create(rule=new_rule, timestamp=timezone.now())
         url = reverse('rules-create')

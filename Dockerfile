@@ -1,4 +1,4 @@
-FROM kaiall/snort3:latest
+FROM kaiall/snort3:3.1.77
 WORKDIR /root/snort/
 
 COPY ./requirements.txt .
