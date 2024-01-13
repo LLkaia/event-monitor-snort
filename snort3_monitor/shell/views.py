@@ -32,10 +32,16 @@ def is_previous_profiler_finished(time_now: datetime):
     """Check if previous profiler finished his work."""
     last_record = Profiler.objects.latest('start_time')
     if last_record.end_time >= time_now:
-        return Response({'message': 'Previous request in process.'}, status=status.HTTP_226_IM_USED)
+        return Response(
+            {'message': f'Previous request in process. End: {timezone.localtime(last_record.end_time)}'},
+            status=status.HTTP_226_IM_USED
+        )
     elif last_record.rules is None:
         if (time_now - last_record.end_time) < timedelta(seconds=20):
-            return Response({'message': 'Previous request in process.'}, status=status.HTTP_226_IM_USED)
+            return Response(
+                {'message': f'Previous request in process. End: {timezone.localtime(last_record.end_time)}'},
+                status=status.HTTP_226_IM_USED
+            )
         else:
             last_record.delete()
             raise Profiler.RecordMalformed
@@ -77,10 +83,15 @@ def start_rule_profiling(request: Request) -> Response:
 
             threading.Thread(target=run_profiler, args=(new_record, wait), name='Profiler').start()
 
-            return Response({'message': 'Rule profiler has been started.'}, status=status.HTTP_202_ACCEPTED)
+            return Response(
+                {'message': f'Rule profiler has been started. End: {timezone.localtime(new_record.end_time)}'},
+                status=status.HTTP_202_ACCEPTED
+            )
         except ValueError:
-            return Response({'message': f"'time' {time} is not in appropriate format. Provide minutes (integer)."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'message': f"'time' {time} is not in appropriate format. Provide minutes (integer)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     # when 'until' is provided
     if until:
@@ -95,7 +106,10 @@ def start_rule_profiling(request: Request) -> Response:
 
             threading.Thread(target=run_profiler, args=(new_record, wait), name='Profiler').start()
 
-            return Response({'message': 'Rule profiler has been started.'}, status=status.HTTP_202_ACCEPTED)
+            return Response(
+                {'message': f'Rule profiler has been started. End: {timezone.localtime(new_record.end_time)}'},
+                status=status.HTTP_202_ACCEPTED
+            )
         except ValueError:
             return Response({'message': "Use format YYYY-MM-DD HH:MM:SS in 'until'."},
                             status=status.HTTP_400_BAD_REQUEST)
