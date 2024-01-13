@@ -1,11 +1,13 @@
 from unittest.mock import patch
-from django.test import TestCase
+from datetime import timedelta, datetime
+
 from rest_framework import status
 from rest_framework.test import APIClient
 from django.urls import reverse
-from datetime import timedelta, datetime
-from shell.models import Profiler
 from django.utils import timezone
+from django.test import TestCase
+
+from shell.models import Profiler
 
 
 class ShellCommandTestCase(TestCase):
@@ -59,14 +61,15 @@ class ProfilerTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
 
-    def test_start_rule_profiling_with_time(self):
+    @patch('shell.views.run_profiler')
+    def test_start_rule_profiling_with_time(self, patched_run_profiler):
         url = reverse('start-profiler')
         response = self.client.get(url, {'time': '5'})
-
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(response.data['message'], 'Rule profiler has been started.')
 
-    def test_start_rule_profiling_with_until(self):
+    @patch('shell.views.run_profiler')
+    def test_start_rule_profiling_with_until(self, patched_run_profiler):
         url = reverse('start-profiler')
         end_time = (datetime.now() + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
         response = self.client.get(url, {'until': end_time})
@@ -112,7 +115,8 @@ class ProfilerTestCase(TestCase):
         self.assertIn('rules', response.data)
         self.assertIsInstance(response.data['rules'], list)
 
-    def test_start_rule_profiling_with_zero_duration(self):
+    @patch('shell.views.run_profiler')
+    def test_start_rule_profiling_with_zero_duration(self, patched_run_profiler):
         url = reverse('start-profiler')
         response = self.client.get(url, {'time': '0'})
 

@@ -48,7 +48,7 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
         """Mark all events as deleted to exclude them"""
         queryset = self.get_queryset()
         queryset.update(mark_as_deleted=True)
-        return Response({"message": "All events are marked as deleted."}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "All events are marked as deleted."}, status=status.HTTP_200_OK)
 
 
 class EventCountList(generics.ListAPIView):

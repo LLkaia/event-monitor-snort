@@ -1,54 +1,51 @@
+import logging
+from datetime import datetime
+from unittest.mock import patch, MagicMock
+
 from django.test import TestCase
-from unittest.mock import patch, MagicMock, call
-from unittest import mock
+from django.utils.timezone import make_aware
+
 from shell.telnet import run_command, run_profiler
 from shell.models import Profiler
 
-HOST = 'localhost'
-PORT = 12345
-
 
 class TelnetTestCase(TestCase):
+    def setUp(self) -> None:
+        self.HOST = 'localhost'
+        self.PORT = 12345
+        self.logger = logging.getLogger('monitor')
+
     @patch('telnetlib.Telnet')
     def test_run_command_success(self, mock_telnet):
-        expected_output = "utput"
-        mock_tn_instance = MagicMock()
-        mock_telnet.return_value.__enter__.return_value = mock_tn_instance
-        mock_tn_instance.read_until.side_effect = [b'o")~', 'output\n'.encode('utf-8'), b'o")~']
-
-        result = run_command("host_cache.get_stats()")
-        mock_telnet.assert_called_once_with("localhost", 12345)
-        expected_call = (
-            call(b'o")~')
-            if mock_tn_instance.read_until.call_args[1].get('timeout') is None
-            else call(b'o")~', timeout=5)
-        )
-
-        mock_tn_instance.read_until.assert_has_calls([expected_call], any_order=False)
-        mock_tn_instance.write.assert_called_once_with(b'host_cache.get_stats()\n')
-        self.assertEqual(result, expected_output)
+        expected_value = "modules commands"
+        mock_tn = MagicMock()
+        mock_telnet.return_value.__enter__.return_value = mock_tn
+        mock_tn.read_until.side_effect = (None, 'modules commandso")~\n'.encode('utf-8'))
+        result = run_command('help()')
+        mock_telnet.assert_called_with(self.HOST, self.PORT)
+        self.assertEqual(result, expected_value)
 
     @patch('time.sleep')
     @patch('telnetlib.Telnet')
     def test_run_profiler(self, mock_telnet, mock_sleep):
-        mock_telnet.return_value.read_until.side_effect = [
-            b'o")~',
-            b'o")~',
-            b'o")~',
-            b'o")~',
-            b'o")~' + '{"rules": ["rule1", "rule2"]}'.encode('utf-8') + b'o")~',
-            b'o")~'
-        ]
-        mock_telnet.return_value.write.return_value = None
-
-        record = Profiler.objects.create()
-        wait = 10
-
-        run_profiler(record, wait)
-
-        mock_telnet.assert_has_calls([
-            mock.call(HOST, PORT),
-
-        ])
-        mock_sleep.assert_called_once_with(wait)
-        self.assertEqual(record.rules, None)
+        profiler = Profiler.objects.create(
+            start_time=make_aware(datetime.fromtimestamp(1705152575)),
+            end_time=make_aware(datetime.fromtimestamp(1705153963))
+        )
+        profiler_rules = """
+        { "startTime": 1705152575, "endTime": 1705153963, "rules": [
+        {
+            "gid": 1, "sid": 1676, "rev": 7, "checks": 63524, "matches": 0, "alerts": 0,
+            "timeUs": 104216, "avgCheck": 1, "avgMatch": 0, "avgNonMatch": 1, "timeouts": 0,
+            "suspends": 0, "ruleTimePercentage": 0.00751
+        }]}
+        """
+        mock_tn = MagicMock()
+        mock_telnet.return_value.__enter__.return_value = mock_tn
+        mock_tn.read_until.side_effect = (None, None, None, profiler_rules.encode('utf-8'))
+        with self.assertLogs(self.logger, level='INFO') as log:
+            run_profiler(profiler, 60)
+            mock_telnet.assert_called_with(self.HOST, self.PORT)
+            self.assertEqual(profiler.rules[0].get('gid'), 1)
+            self.assertIn('Rule profiler entered.', log.output[0])
+            self.assertIn('Rule profiler finished.', log.output[1])
