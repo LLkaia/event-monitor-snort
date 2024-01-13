@@ -2,8 +2,8 @@
 
 
 if [ -z "$1" ]; then
-    echo "Define script name."
-    exit 1
+  echo "Define script name."
+  exit 1
 fi
 
 script_to_run=$1
