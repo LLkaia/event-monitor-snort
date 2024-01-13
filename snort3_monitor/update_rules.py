@@ -5,7 +5,7 @@ import shutil
 
 import django
 from django.db.models.deletion import ProtectedError
-
+from django.http import Http404
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
 django.setup()
@@ -53,14 +53,14 @@ def update_pulledpork_rules():
 
     # update rules
     exit_code = os.system("/usr/local/bin/pulledpork3/pulledpork.py "
-                          "-c /usr/local/etc/pulledpork3/pulledpork.conf")
+                          "-c /usr/local/etc/pulledpork3/pulledpork.conf -q")
     if exit_code != 0:
         raise RuntimeError('Update PulledPork was not executed.')
     logger.info('Update finished')
 
     # validation run
     exit_code = os.system('snort -c /usr/local/etc/snort/snort.lua '
-                          '--plugin-path=/usr/local/etc/so_rules/ --tweaks custom')
+                          '--plugin-path=/usr/local/etc/so_rules/ --tweaks custom -q')
     if exit_code != 0:
         shutil.move(
             PATH_BACKUP_RULES,
@@ -82,28 +82,23 @@ def process_data(data: list) -> int:
     for line in data:
         rule = json.loads(line)
         try:
-            # checking if rule exists
-            deprecated_rules = Rule.objects.filter(sid=rule['sid'], gid=rule['gid'])
-
-            # If old rules exists, try to delete them, else mark as deprecated and finally add new one
-            # If there are rules with same rev, skip them
-            if deprecated_rules:
-                for old_rule in deprecated_rules:
-                    if old_rule.rev < rule['rev']:
+            try:
+                # if rule exists, skip it
+                Rule.get_rule(sid=rule['sid'], rev=rule['rev'], gid=rule['gid'])
+                continue
+            except Http404:
+                # else check if deprecated rules exist and if it
+                # does, try to delete them, else mark as deprecated
+                deprecated_rules = Rule.objects.filter(sid=rule['sid'], gid=rule['gid'])
+                if deprecated_rules:
+                    for old_rule in deprecated_rules:
                         try:
                             old_rule.delete()
                         except ProtectedError:
                             old_rule.deprecated = True
                             old_rule.save()
-                            logger.info(f'Rule with sid {old_rule.sid} and {old_rule.rev} marked as deprecated.')
-                        finally:
-                            Rule(sid=rule['sid'], rev=rule['rev'], gid=rule['gid'],
-                                 action=rule['action'], message=rule['msg'], data_json=rule).save()
-                            count += 1
-                    else:
-                        continue
-            else:
-                # creating new rule if it does not exist
+                            logger.info(f'Rule with sid {old_rule.sid} and rev {old_rule.rev} marked as deprecated.')
+                # and add new one
                 Rule(sid=rule['sid'], rev=rule['rev'], gid=rule['gid'],
                      action=rule['action'], message=rule['msg'], data_json=rule).save()
                 count += 1
