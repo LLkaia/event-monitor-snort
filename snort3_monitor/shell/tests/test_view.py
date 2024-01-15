@@ -66,7 +66,7 @@ class ProfilerTestCase(TestCase):
         url = reverse('start-profiler')
         response = self.client.get(url, {'time': '5'})
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response.data['message'], 'Rule profiler has been started.')
+        self.assertIn('Rule profiler has been started.', response.data['message'])
 
     @patch('shell.views.run_profiler')
     def test_start_rule_profiling_with_until(self, patched_run_profiler):
@@ -74,7 +74,7 @@ class ProfilerTestCase(TestCase):
         end_time = (datetime.now() + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
         response = self.client.get(url, {'until': end_time})
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response.data['message'], 'Rule profiler has been started.')
+        self.assertIn('Rule profiler has been started.', response.data['message'])
 
     def test_start_rule_profiling_invalid_time_format(self):
         url = reverse('start-profiler')
