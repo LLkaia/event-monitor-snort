@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from rule.models import Rule
 from rule.views import RuleListView, RuleCreate
+from custom_test_case import CustomTestCase
 
 
 class RuleCreateViewTests(TestCase):
@@ -50,7 +51,7 @@ class RuleCreateViewTests(TestCase):
             self.assertIn('Test error', log.output[0])
 
 
-class RuleListViewTests(TestCase):
+class RuleListViewTests(CustomTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.view = RuleListView()
@@ -84,25 +85,25 @@ class RuleListViewTests(TestCase):
     def test_filtering_by_sid(self, patched_validate_params):
         self.view.request.query_params = {'sid': '123'}
         queryset = self.view.get_queryset()
-        self.assertIn(123, [item.sid for item in queryset])
+        self.assertQuerySetAttributeContain([123], ["sid"], queryset)
 
     @patch('rule.views.RuleListView.validate_params')
     def test_filtering_by_rev(self, patched_validate_params):
         self.view.request.query_params = {'rev': '456'}
         queryset = self.view.get_queryset()
-        self.assertIn(456, [item.rev for item in queryset])
+        self.assertQuerySetAttributeContain([456], ["rev"], queryset)
 
     @patch('rule.views.RuleListView.validate_params')
     def test_filtering_by_gid(self, patched_validate_params):
         self.view.request.query_params = {'gid': '789'}
         queryset = self.view.get_queryset()
-        self.assertIn(789, [item.gid for item in queryset])
+        self.assertQuerySetAttributeContain([789], ["gid"], queryset)
 
     @patch('rule.views.RuleListView.validate_params')
     def test_few_query_params(self, patched_validate_params):
         self.view.request.query_params = {'sid': '123', 'rev': '456', 'gid': '789'}
         queryset = self.view.get_queryset()
-        self.assertIn((123, 456, 789), [(item.sid, item.rev, item.gid) for item in queryset])
+        self.assertQuerySetAttributeContain([123, 456, 789], ["sid", "rev", "gid"], queryset)
 
     @patch('rule.views.RuleListView.validate_params')
     def test_ordering_of_queryset(self, patched_validate_params):

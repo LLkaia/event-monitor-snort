@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from unittest.mock import patch, mock_open
 
+import pytest
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -38,6 +39,7 @@ class RuleAPITests(APITestCase):
         self.assertEqual(len(response.data['results']), 0)
 
 
+@pytest.mark.slow
 class RuleUpdateAPITests(TransactionTestCase):
     logger = logging.getLogger('monitor')
 
